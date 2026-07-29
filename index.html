@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>رفع الملفات - FileShare</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #121418; color: #e1e7ec; font-family: system-ui, -apple-system, sans-serif; }
+        .gofile-card { background-color: #1a1d24; border: 1px solid #2a2f3a; }
+        .gofile-green { background-color: #00d26a; }
+        .gofile-green:hover { background-color: #00be5e; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Navbar -->
+    <header class="border-b border-gray-800 py-4 px-6 flex justify-between items-center bg-[#16181d]">
+        <div class="flex items-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-up text-[#00d26a] text-2xl"></i>
+            <span class="font-bold text-xl tracking-wider text-white">FileShare</span>
+        </div>
+        <div class="text-sm text-gray-400">تخزين آمن بلا حدود</div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex items-center justify-center p-4">
+        <div class="gofile-card w-full max-w-xl rounded-2xl p-8 shadow-2xl text-center">
+            
+            <div id="upload-section">
+                <h1 class="text-2xl font-bold mb-2 text-white">رفع الملفات بسرعة وسهولة</h1>
+                <p class="text-gray-400 text-sm mb-8">ارفع ملفاتك واحصل على رابط مخصص يبقى للأبد بدون حذف.</p>
+
+                <!-- Dropzone -->
+                <label id="drop-zone" class="border-2 border-dashed border-gray-700 hover:border-[#00d26a] rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer transition-all bg-[#15171d] block">
+                    <i class="fa-solid fa-cloud-arrow-up text-5xl text-gray-500 mb-4"></i>
+                    <span class="text-gray-300 font-medium">اسحب الملفات هنا أو انقر للاختيار</span>
+                    <span class="text-gray-500 text-xs mt-2">جميع الأحجام مسموحة</span>
+                    <input type="file" id="file-input" class="hidden">
+                </label>
+            </div>
+
+            <!-- Progress Section -->
+            <div id="progress-section" class="hidden text-right">
+                <div class="flex justify-between text-sm mb-2">
+                    <span id="file-name" class="text-white font-medium truncate max-w-[300px]"></span>
+                    <span id="progress-text" class="text-[#00d26a] font-bold">0%</span>
+                </div>
+                <div class="w-full bg-gray-800 rounded-full h-2.5 mb-6 overflow-hidden">
+                    <div id="progress-bar" class="gofile-green h-2.5 rounded-full w-0 transition-all duration-150"></div>
+                </div>
+                <p class="text-gray-400 text-xs text-center animate-pulse">جاري رفع الملف إلى السيرفر...</p>
+            </div>
+
+            <!-- Success Section -->
+            <div id="success-section" class="hidden text-right">
+                <div class="bg-green-950/30 border border-green-800/50 rounded-xl p-4 mb-6 text-center">
+                    <i class="fa-solid fa-circle-check text-green-400 text-3xl mb-2"></i>
+                    <h3 class="text-white font-bold">تم رفع الملف بنجاح!</h3>
+                </div>
+                <label class="block text-xs text-gray-400 mb-1">الرابط المخصص للملف:</label>
+                <div class="flex gap-2">
+                    <input type="text" id="share-link" readonly class="bg-[#121418] border border-gray-700 rounded-lg px-4 py-2.5 text-sm w-full text-gray-300 focus:outline-none">
+                    <button onclick="copyLink()" class="gofile-green text-black font-bold px-5 py-2.5 rounded-lg text-sm transition-all whitespace-nowrap">
+                        <i class="fa-regular fa-copy ml-1"></i> نسخ
+                    </button>
+                </div>
+                <button onclick="location.reload()" class="mt-6 text-sm text-gray-400 hover:text-white underline block mx-auto">رفع ملف آخر</button>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-xs text-gray-500 border-t border-gray-800 bg-[#16181d]">
+        جميع الحقوق محفوظة &copy; 2026
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBUI5HLO1TgaXXoxHQ81JrwCw5OqADZGmY",
+            authDomain: "kabaka-1fb1b.firebaseapp.com",
+            projectId: "kabaka-1fb1b",
+            storageBucket: "kabaka-1fb1b.firebasestorage.app",
+            messagingSenderId: "714186716062",
+            appId: "1:714186716062:web:39e5f6603a69d5bc2b9c8f"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const storage = getStorage(app);
+        const db = getFirestore(app);
+
+        const fileInput = document.getElementById('file-input');
+        const uploadSection = document.getElementById('upload-section');
+        const progressSection = document.getElementById('progress-section');
+        const successSection = document.getElementById('success-section');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const fileNameEl = document.getElementById('file-name');
+        const shareLinkInput = document.getElementById('share-link');
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            uploadSection.classList.add('hidden');
+            progressSection.classList.remove('hidden');
+            fileNameEl.textContent = file.name;
+
+            const fileId = Math.random().toString(36).substring(2, 10);
+            const storageRef = ref(storage, `uploads/${fileId}_${file.name}`);
+            const uploadTask = uploadBytesResumable(storageRef, file);
+
+            uploadTask.on('state_changed', 
+                (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    progressBar.style.width = progress + '%';
+                    progressText.textContent = Math.round(progress) + '%';
+                }, 
+                (error) => {
+                    alert('حدث خطأ أثناء الرفع: ' + error.message);
+                    location.reload();
+                }, 
+                async () => {
+                    const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                    
+                    await setDoc(doc(db, "files", fileId), {
+                        name: file.name,
+                        size: file.size,
+                        url: downloadURL,
+                        createdAt: new Date().toISOString()
+                    });
+
+                    progressSection.classList.add('hidden');
+                    successSection.classList.remove('hidden');
+                    
+                    const fullLink = `${window.location.origin}/${fileId}`;
+                    shareLinkInput.value = fullLink;
+                }
+            );
+        });
+
+        window.copyLink = function() {
+            shareLinkInput.select();
+            navigator.clipboard.writeText(shareLinkInput.value);
+            alert('تم نسخ الرابط بنجاح!');
+        }
+    </script>
+</body>
+</html>
