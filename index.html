@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>رفع الملفات - Firebase المجاني</title>
+    <title>موقع الرفع والتحميل - FileShare</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { background-color: #121418; color: #e1e7ec; font-family: system-ui, -apple-system, sans-serif; }
         .gofile-card { background-color: #1a1d24; border: 1px solid #2a2f3a; }
-        .gofile-green { background-color: #00d26a; }
+        .gofile-green { background-color: #00d26a; color: #000; }
         .gofile-green:hover { background-color: #00be5e; }
     </style>
 </head>
@@ -28,11 +28,11 @@
     <main class="flex-grow flex items-center justify-center p-4">
         <div class="gofile-card w-full max-w-xl rounded-2xl p-8 shadow-2xl text-center">
             
+            <!-- Upload Section -->
             <div id="upload-section">
                 <h1 class="text-2xl font-bold mb-2 text-white">رفع الملفات ببساطة</h1>
                 <p class="text-gray-400 text-sm mb-8">ارفع ملفك وسيتم تخزينه مباشرة في قاعدة البيانات المجانية.</p>
 
-                <!-- Dropzone -->
                 <label class="border-2 border-dashed border-gray-700 hover:border-[#00d26a] rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer transition-all bg-[#15171d] block">
                     <i class="fa-solid fa-cloud-arrow-up text-5xl text-gray-500 mb-4"></i>
                     <span class="text-gray-300 font-medium">اضغط لاختيار الملف</span>
@@ -41,10 +41,31 @@
                 </label>
             </div>
 
+            <!-- Download Section (Appears if ?id= is in URL) -->
+            <div id="download-section" class="hidden">
+                <div id="loading-download" class="py-8">
+                    <i class="fa-solid fa-spinner fa-spin text-4xl text-[#00d26a] mb-4"></i>
+                    <p class="text-gray-300 text-sm font-medium">جاري تجهيز الملف للتحميل...</p>
+                </div>
+                <div id="file-ready" class="hidden">
+                    <i class="fa-solid fa-file-arrow-down text-5xl text-[#00d26a] mb-4"></i>
+                    <h1 id="file-name" class="text-xl font-bold mb-2 text-white truncate">اسم الملف</h1>
+                    <p id="file-date" class="text-gray-400 text-xs mb-8">تاريخ الرفع: --</p>
+                    <a id="download-btn" href="#" download class="gofile-green font-bold px-8 py-3 rounded-xl text-base transition-all inline-block w-full shadow-lg">
+                        <i class="fa-solid fa-download ml-2"></i> تحميل الملف الآن
+                    </a>
+                </div>
+                <div id="error-download" class="hidden py-8">
+                    <i class="fa-solid fa-triangle-exclamation text-4xl text-red-500 mb-4"></i>
+                    <h3 class="text-white font-bold text-lg mb-2">الملف غير موجود أو تم حذفه!</h3>
+                    <a href="index.html" class="mt-4 inline-block text-sm text-[#00d26a] underline">الذهاب لصفحة الرفع</a>
+                </div>
+            </div>
+
             <!-- Progress Section -->
             <div id="progress-section" class="hidden text-right">
                 <div class="flex justify-between text-sm mb-2">
-                    <span id="file-name" class="text-white font-medium truncate max-w-[300px]"></span>
+                    <span id="prog-file-name" class="text-white font-medium truncate max-w-[300px]"></span>
                     <span id="progress-text" class="text-[#00d26a] font-bold">0%</span>
                 </div>
                 <div class="w-full bg-gray-800 rounded-full h-2.5 mb-6 overflow-hidden">
@@ -62,11 +83,11 @@
                 <label class="block text-xs text-gray-400 mb-1">رابط التحميل المباشر:</label>
                 <div class="flex gap-2">
                     <input type="text" id="share-link" readonly class="bg-[#121418] border border-gray-700 rounded-lg px-4 py-2.5 text-sm w-full text-gray-300 focus:outline-none">
-                    <button onclick="copyLink()" class="gofile-green text-black font-bold px-5 py-2.5 rounded-lg text-sm transition-all whitespace-nowrap">
+                    <button onclick="copyLink()" class="gofile-green font-bold px-5 py-2.5 rounded-lg text-sm transition-all whitespace-nowrap">
                         <i class="fa-regular fa-copy ml-1"></i> نسخ
                     </button>
                 </div>
-                <button onclick="location.reload()" class="mt-6 text-sm text-gray-400 hover:text-white underline block mx-auto">رفع ملف آخر</button>
+                <button onclick="location.href='index.html'" class="mt-6 text-sm text-gray-400 hover:text-white underline block mx-auto">رفع ملف آخر</button>
             </div>
 
         </div>
@@ -80,7 +101,7 @@
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBUI5HLO1TgaXXoxHQ81JrwCw5OqADZGmY",
@@ -95,22 +116,62 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        const fileInput = document.getElementById('file-input');
+        const urlParams = new URLSearchParams(window.location.search);
+        const fileId = urlParams.get('id');
+
         const uploadSection = document.getElementById('upload-section');
+        const downloadSection = document.getElementById('download-section');
+        const loadingDownload = document.getElementById('loading-download');
+        const fileReady = document.getElementById('file-ready');
+        const errorDownload = document.getElementById('error-download');
+        
+        const fileInput = document.getElementById('file-input');
         const progressSection = document.getElementById('progress-section');
         const successSection = document.getElementById('success-section');
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('progress-text');
-        const fileNameEl = document.getElementById('file-name');
+        const progFileName = document.getElementById('prog-file-name');
         const shareLinkInput = document.getElementById('share-link');
 
+        // إذا كان هناك معرف في الرابط، قم بتحويل الصفحة إلى وضع التحميل تلقائياً
+        if (fileId) {
+            uploadSection.classList.add('hidden');
+            downloadSection.classList.remove('hidden');
+
+            async function fetchFile() {
+                try {
+                    const snapshot = await get(child(ref(db), `files/${fileId}`));
+                    if (snapshot.exists()) {
+                        const fileData = snapshot.val();
+                        loadingDownload.classList.add('hidden');
+                        fileReady.classList.remove('hidden');
+
+                        document.getElementById('file-name').textContent = fileData.name;
+                        document.getElementById('file-date').textContent = "تاريخ الرفع: " + new Date(fileData.createdAt).toLocaleDateString('ar-EG');
+                        
+                        const downloadBtn = document.getElementById('download-btn');
+                        downloadBtn.href = fileData.data;
+                        downloadBtn.download = fileData.name;
+                    } else {
+                        loadingDownload.classList.add('hidden');
+                        errorDownload.classList.remove('hidden');
+                    }
+                } catch (err) {
+                    loadingDownload.classList.add('hidden');
+                    errorDownload.classList.remove('hidden');
+                }
+            }
+            fetchFile();
+        }
+
+        // عملية الرفع
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
 
             uploadSection.classList.add('hidden');
             progressSection.classList.remove('hidden');
-            fileNameEl.textContent = file.name;
+            progFileName.textContent = file.name;
 
             let currentProgress = 0;
             const interval = setInterval(() => {
@@ -124,10 +185,10 @@
             const reader = new FileReader();
             reader.onload = async function(event) {
                 const base64Data = event.target.result;
-                const fileId = Math.random().toString(36).substring(2, 10);
+                const newFileId = Math.random().toString(36).substring(2, 10);
 
                 try {
-                    await set(ref(db, 'files/' + fileId), {
+                    await set(ref(db, 'files/' + newFileId), {
                         name: file.name,
                         type: file.type,
                         data: base64Data,
@@ -141,7 +202,8 @@
                     setTimeout(() => {
                         progressSection.classList.add('hidden');
                         successSection.classList.remove('hidden');
-                        shareLinkInput.value = window.location.origin + "/download.html?id=" + fileId;
+                        // الرابط الآن يشير مباشرة لملف index.html مع المعرف بدون الحاجة لصفحة ثانية
+                        shareLinkInput.value = window.location.origin + window.location.pathname + "?id=" + newFileId;
                     }, 400);
 
                 } catch (err) {
