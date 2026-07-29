@@ -3,110 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تحميل الملف</title>
+    <title>تحميل الملف - FileShare</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body { background-color: #121418; color: #e1e7ec; font-family: system-ui, -apple-system, sans-serif; }
         .gofile-card { background-color: #1a1d24; border: 1px solid #2a2f3a; }
-        .gofile-green { background-color: #00d26a; }
+        .gofile-green { background-color: #00d26a; color: #000; }
         .gofile-green:hover { background-color: #00be5e; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
 
+    <!-- Navbar -->
     <header class="border-b border-gray-800 py-4 px-6 flex justify-between items-center bg-[#16181d]">
         <div class="flex items-center gap-2">
             <i class="fa-solid fa-cloud-arrow-up text-[#00d26a] text-2xl"></i>
             <span class="font-bold text-xl tracking-wider text-white">FileShare</span>
         </div>
+        <div class="text-sm text-gray-400">تحميل الملفات الآمن</div>
     </header>
 
+    <!-- Main Content -->
     <main class="flex-grow flex items-center justify-center p-4">
-        <div class="gofile-card w-full max-w-md rounded-2xl p-8 shadow-2xl text-center">
+        <div class="gofile-card w-full max-w-xl rounded-2xl p-8 shadow-2xl text-center">
             
-            <div id="loading" class="py-10">
+            <div id="loading-section" class="py-8">
                 <i class="fa-solid fa-spinner fa-spin text-4xl text-[#00d26a] mb-4"></i>
-                <p class="text-gray-400 text-sm">جاري جلب تفاصيل الملف...</p>
+                <p class="text-gray-300 text-sm font-medium">جاري جلب بيانات الملف...</p>
             </div>
 
-            <div id="file-box" class="hidden">
-                <div class="w-16 h-16 bg-[#121418] rounded-2xl mx-auto flex items-center justify-center border border-gray-700 mb-4">
-                    <i class="fa-solid fa-file-arrow-down text-3xl text-[#00d26a]"></i>
-                </div>
-                <h2 id="file-title" class="text-lg font-bold text-white mb-1 truncate px-2">اسم الملف</h2>
-                <p id="file-size" class="text-gray-400 text-xs mb-6">0 MB</p>
+            <div id="file-section" class="hidden">
+                <i class="fa-solid fa-file-arrow-down text-5xl text-[#00d26a] mb-4"></i>
+                <h1 id="file-name" class="text-xl font-bold mb-2 text-white truncate">اسم الملف</h1>
+                <p id="file-date" class="text-gray-400 text-xs mb-8">تاريخ الرفع: --</p>
 
-                <a id="download-btn" href="#" class="gofile-green text-black font-bold py-3 px-6 rounded-xl block w-full transition-all shadow-lg text-center">
-                    <i class="fa-solid fa-download ml-2"></i> تحميل الملف مباشرة
+                <a id="download-btn" href="#" download class="gofile-green font-bold px-8 py-3 rounded-xl text-base transition-all inline-block w-full shadow-lg">
+                    <i class="fa-solid fa-download ml-2"></i> تحميل الملف الآن
                 </a>
             </div>
 
-            <div id="error-box" class="hidden py-8">
-                <i class="fa-solid fa-triangle-exclamation text-red-500 text-4xl mb-4"></i>
-                <h3 class="text-white font-bold text-lg">عذراً، الملف غير موجود</h3>
-                <p class="text-gray-400 text-xs mt-2">قد يكون الرابط خاطئاً أو تم حذف الملف.</p>
-                <a href="/" class="mt-6 inline-block text-xs text-[#00d26a] underline">الذهاب للصفحة الرئيسية</a>
+            <div id="error-section" class="hidden py-8">
+                <i class="fa-solid fa-triangle-exclamation text-4xl text-red-500 mb-4"></i>
+                <h3 class="text-white font-bold text-lg mb-2">الملف غير موجود أو تم حذفه!</h3>
+                <p class="text-gray-400 text-xs">تأكد من صحة الرابط أو اطلب رابطاً جديداً.</p>
+                <a href="index.html" class="mt-6 inline-block text-sm text-[#00d26a] underline">الذهاب لصفحة الرفع</a>
             </div>
 
         </div>
     </main>
 
+    <!-- Footer -->
     <footer class="text-center py-4 text-xs text-gray-500 border-t border-gray-800 bg-[#16181d]">
         جميع الحقوق محفوظة &copy; 2026
     </footer>
 
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getDatabase, ref, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyBUI5HLO1TgaXXoxHQ81JrwCw5OqADZGmY",
+            authDomain: "kabaka-1fb1b.firebaseapp.com",
+            databaseURL: "https://kabaka-1fb1b-default-rtdb.firebaseio.com",
+            projectId: "kabaka-1fb1b",
+            storageBucket: "kabaka-1fb1b.firebasestorage.app",
+            messagingSenderId: "714186716062",
+            appId: "1:714186716062:web:39e5f6603a69d5bc2b9c8f"
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        const db = getDatabase(app);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const fileId = urlParams.get('id');
+
+        const loadingSection = document.getElementById('loading-section');
+        const fileSection = document.getElementById('file-section');
+        const errorSection = document.getElementById('error-section');
+        const fileNameEl = document.getElementById('file-name');
+        const fileDateEl = document.getElementById('file-date');
+        const downloadBtn = document.getElementById('download-btn');
 
         async function fetchFile() {
-            const pathSegments = window.location.pathname.split('/');
-            const fileId = pathSegments[pathSegments.length - 1];
-
             if (!fileId) {
-                showError();
+                loadingSection.classList.add('hidden');
+                errorSection.classList.remove('hidden');
                 return;
             }
 
             try {
-                const docRef = doc(db, "files", fileId);
-                const docSnap = await getDoc(docRef);
+                const dbRef = ref(db);
+                const snapshot = await get(child(dbRef, `files/${fileId}`));
 
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    document.getElementById('file-title').textContent = data.name;
-                    document.getElementById('file-size').textContent = (data.size / (1024 * 1024)).toFixed(2) + ' MB';
+                if (snapshot.exists()) {
+                    const fileData = snapshot.val();
+                    loadingSection.classList.add('hidden');
+                    fileSection.classList.remove('hidden');
+
+                    fileNameEl.textContent = fileData.name;
+                    fileDateEl.textContent = "تاريخ الرفع: " + new Date(fileData.createdAt).toLocaleDateString('ar-EG');
                     
-                    const downloadBtn = document.getElementById('download-btn');
-                    downloadBtn.href = data.url;
-                    downloadBtn.setAttribute('download', data.name);
-
-                    document.getElementById('loading').classList.add('hidden');
-                    document.getElementById('file-box').classList.remove('hidden');
+                    // ربط البيانات ليقوم المستخدم بالتحميل المباشر
+                    downloadBtn.href = fileData.data;
+                    downloadBtn.download = fileData.name;
                 } else {
-                    showError();
+                    loadingSection.classList.add('hidden');
+                    errorSection.classList.remove('hidden');
                 }
             } catch (err) {
-                showError();
+                loadingSection.classList.add('hidden');
+                errorSection.classList.remove('hidden');
             }
-        }
-
-        function showError() {
-            document.getElementById('loading').classList.add('hidden');
-            document.getElementById('error-box').classList.remove('hidden');
         }
 
         fetchFile();
