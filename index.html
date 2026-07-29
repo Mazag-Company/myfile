@@ -42,9 +42,15 @@
             </div>
 
             <!-- Progress Section -->
-            <div id="progress-section" class="hidden py-8">
-                <i class="fa-solid fa-spinner fa-spin text-4xl text-[#00d26a] mb-4"></i>
-                <p class="text-gray-300 text-sm font-medium">جاري معالجة وحفظ الملف في Firebase...</p>
+            <div id="progress-section" class="hidden text-right">
+                <div class="flex justify-between text-sm mb-2">
+                    <span id="file-name" class="text-white font-medium truncate max-w-[300px]"></span>
+                    <span id="progress-text" class="text-[#00d26a] font-bold">0%</span>
+                </div>
+                <div class="w-full bg-gray-800 rounded-full h-2.5 mb-6 overflow-hidden">
+                    <div id="progress-bar" class="gofile-green h-2.5 rounded-full w-0 transition-all duration-150"></div>
+                </div>
+                <p class="text-gray-400 text-xs text-center animate-pulse">جاري معالجة وحفظ الملف في Firebase...</p>
             </div>
 
             <!-- Success Section -->
@@ -71,10 +77,10 @@
         جميع الحقوق محفوظة &copy; 2026
     </footer>
 
-    <!-- Firebase SDKs (Realtime Database المجانية) -->
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBnYZUEuMKBqV6FLE-NetXG3vHsQFeXvSY",
@@ -94,6 +100,9 @@
         const uploadSection = document.getElementById('upload-section');
         const progressSection = document.getElementById('progress-section');
         const successSection = document.getElementById('success-section');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const fileNameEl = document.getElementById('file-name');
         const shareLinkInput = document.getElementById('share-link');
 
         fileInput.addEventListener('change', (e) => {
@@ -102,6 +111,17 @@
 
             uploadSection.classList.add('hidden');
             progressSection.classList.remove('hidden');
+            fileNameEl.textContent = file.name;
+
+            let currentProgress = 0;
+            // محاكاة سريعة وواقعية لتقدم المعالجة (Progress Bar)
+            const interval = setInterval(() => {
+                if (currentProgress < 90) {
+                    currentProgress += 5;
+                    progressBar.style.width = currentProgress + '%';
+                    progressText.textContent = currentProgress + '%';
+                }
+            }, 100);
 
             const reader = new FileReader();
             reader.onload = async function(event) {
@@ -109,7 +129,6 @@
                 const fileId = Math.random().toString(36).substring(2, 10);
 
                 try {
-                    // تخزين الملف مباشرة في Realtime Database المجانية بدون Storage نهائياً
                     await set(ref(db, 'files/' + fileId), {
                         name: file.name,
                         type: file.type,
@@ -117,11 +136,18 @@
                         createdAt: new Date().toISOString()
                     });
 
-                    progressSection.classList.add('hidden');
-                    successSection.classList.remove('hidden');
-                    
-                    shareLinkInput.value = window.location.origin + "/download.html?id=" + fileId;
+                    clearInterval(interval);
+                    progressBar.style.width = '100%';
+                    progressText.textContent = '100%';
+
+                    setTimeout(() => {
+                        progressSection.classList.add('hidden');
+                        successSection.classList.remove('hidden');
+                        shareLinkInput.value = window.location.origin + "/download.html?id=" + fileId;
+                    }, 400);
+
                 } catch (err) {
+                    clearInterval(interval);
                     alert('حدث خطأ أثناء الحفظ: ' + err.message);
                     location.reload();
                 }
