@@ -36,7 +36,7 @@
                 <label class="border-2 border-dashed border-gray-700 hover:border-[#00d26a] rounded-xl p-10 flex flex-col items-center justify-center cursor-pointer transition-all bg-[#15171d] block">
                     <i class="fa-solid fa-cloud-arrow-up text-5xl text-gray-500 mb-4"></i>
                     <span class="text-gray-300 font-medium">اضغط لاختيار الملف</span>
-                    <span class="text-gray-500 text-xs mt-2">يفضل الملفات الصغيرة (أقل من 1 ميجابايت)</span>
+                    <span class="text-gray-500 text-xs mt-2">يفضل الملفات الصغيرة</span>
                     <input type="file" id="file-input" class="hidden">
                 </label>
             </div>
@@ -83,14 +83,13 @@
         import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
         const firebaseConfig = {
-            apiKey: "AIzaSyBnYZUEuMKBqV6FLE-NetXG3vHsQFeXvSY",
-            authDomain: "adam-c048d.firebaseapp.com",
-            databaseURL: "https://adam-c048d-default-rtdb.firebaseio.com",
-            projectId: "adam-c048d",
-            storageBucket: "adam-c048d.firebasestorage.app",
-            messagingSenderId: "163125717975",
-            appId: "1:163125717975:web:c6851c48dd3e8b7c1d7992",
-            measurementId: "G-748LJ2X9L1"
+            apiKey: "AIzaSyBUI5HLO1TgaXXoxHQ81JrwCw5OqADZGmY",
+            authDomain: "kabaka-1fb1b.firebaseapp.com",
+            databaseURL: "https://kabaka-1fb1b-default-rtdb.firebaseio.com",
+            projectId: "kabaka-1fb1b",
+            storageBucket: "kabaka-1fb1b.firebasestorage.app",
+            messagingSenderId: "714186716062",
+            appId: "1:714186716062:web:39e5f6603a69d5bc2b9c8f"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -114,7 +113,6 @@
             fileNameEl.textContent = file.name;
 
             let currentProgress = 0;
-            // محاكاة سريعة وواقعية لتقدم المعالجة (Progress Bar)
             const interval = setInterval(() => {
                 if (currentProgress < 90) {
                     currentProgress += 5;
